@@ -23,10 +23,12 @@
 
 <script>
     function test() {
+        loader(true);
         var url = document.getElementById('search').value;
             fetch('/Home/Test?url=' + url)            
                 .then(response => response.json())
                 .then(data => {
+                    loader(false);
                     document.getElementById('code').textContent = data;
                     //console.log(data)
                 })

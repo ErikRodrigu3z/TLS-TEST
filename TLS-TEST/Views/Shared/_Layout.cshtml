@@ -54,9 +54,34 @@
     </footer>
 
     <script>
-    window.onload = function () {
+        window.onload = function () {
             prettyPrint();
         }
+
+        function loader(enable) {
+            if (enable == false) {
+                var load = document.getElementsByClassName('loader')[0];
+                if (load != undefined) {
+                    load.remove();
+                }
+            }
+
+            if (enable == true) {
+                //element <p>
+                var message = document.createElement('p');
+                message.innerText = "Favor de esperar, esta operación puede tardar algunos minutos";
+                message.style.textAlign = "center";
+                message.style.fontSize = "25px";
+                message.style.marginTop = "35%";
+                //element <div>
+                var div = document.createElement('div');
+                div.className = "loader";
+                div.appendChild(message);
+                //append div to body
+                document.getElementsByTagName('body')[0].appendChild(div);
+            }
+        }
+
     </script>
 
 
