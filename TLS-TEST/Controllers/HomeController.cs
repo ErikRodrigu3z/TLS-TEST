@@ -31,7 +31,7 @@ namespace TLS_TEST.Controllers
             try
             {
                 SslLabsClient ssl = new SslLabsClient();
-                var res = ssl.GetAnalysisBlocking("https://aspiria-sac-dev.azurewebsites.net/", 24, AnalyzeOptions.Publish | AnalyzeOptions.IgnoreMismatch);
+                var res = ssl.GetAnalysisBlocking(url, 24, AnalyzeOptions.Publish | AnalyzeOptions.IgnoreMismatch);
 
                 JsonSerializerSettings settings = new JsonSerializerSettings
                 {
