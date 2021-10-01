@@ -35,7 +35,8 @@ namespace TLS_TEST.Controllers
 
                 JsonSerializerSettings settings = new JsonSerializerSettings
                 {
-                    Formatting = Formatting.Indented
+                    Formatting = Formatting.Indented,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
                 };
 
                 string json = JsonConvert.SerializeObject(res, settings);
@@ -44,10 +45,16 @@ namespace TLS_TEST.Controllers
 
                 return Json(json);
             }
-            catch (Exception)
+            catch (Exception ex) 
             {
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore                    
+                };
 
-                throw;
+                string json = JsonConvert.SerializeObject(ex, settings);
+                return Json(json);
             }
         }
 
