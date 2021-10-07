@@ -11,6 +11,10 @@ using SslLabsLib.Enums;
 using Newtonsoft.Json;
 using System.Net;
 using System.IO;
+using System.Security.Authentication;
+using System.Net.Security;
+using System.Reflection;
+using System.IO.Compression;
 
 namespace TLS_TEST.Controllers
 {
@@ -25,33 +29,6 @@ namespace TLS_TEST.Controllers
 
         public IActionResult Index()
         {            
-            // Create a request for the URL.
-            WebRequest request = WebRequest.Create(
-              "https://clienttest.ssllabs.com:8443/ssltest/viewMyClient.html");
-            // If required by the server, set the credentials.
-            request.Credentials = CredentialCache.DefaultCredentials;
-            request.Timeout = 10000;
-            // Get the response.
-            WebResponse response = request.GetResponse();
-            // Display the status.
-            Debug.WriteLine(((HttpWebResponse)response).StatusDescription);
-
-            // Get the stream containing content returned by the server.
-            // The using block ensures the stream is automatically closed.
-            using (Stream dataStream = response.GetResponseStream())
-            {
-                // Open the stream using a StreamReader for easy access.
-                StreamReader reader = new StreamReader(dataStream);
-                // Read the content.
-                string responseFromServer = reader.ReadToEnd();
-                // Display the content.
-                Debug.WriteLine(responseFromServer);
-            }
-
-            // Close the response.
-            response.Close();
-
-
             return View();
         }
 
@@ -59,30 +36,13 @@ namespace TLS_TEST.Controllers
         {
             try
             {
-                SslLabsClient ssl = new SslLabsClient();
-                var res = ssl.GetAnalysisBlocking(url, 24, AnalyzeOptions.Publish | AnalyzeOptions.IgnoreMismatch);
-
-                JsonSerializerSettings settings = new JsonSerializerSettings
-                {
-                    Formatting = Formatting.Indented,
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                };
-
-                string json = JsonConvert.SerializeObject(res, settings);
-                SSLdto dto = JsonConvert.DeserializeObject<SSLdto>(json);
-               
-
-                return Json(json);
+                var TlsTest = ProcessProtocols(url);
+                string json = JsonConvert.SerializeObject(TlsTest, Settings());
+                return Json(TlsTest);  
             }
             catch (Exception ex) 
             {
-                JsonSerializerSettings settings = new JsonSerializerSettings
-                {
-                    Formatting = Formatting.Indented,
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore                    
-                };
-
-                string json = JsonConvert.SerializeObject(ex, settings);
+                string json = JsonConvert.SerializeObject(ex, Settings());
                 return Json(json);
             }
         }
@@ -98,5 +58,82 @@ namespace TLS_TEST.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        #region Methods
+
+        public string GetProtocols(string url)
+        {
+            try
+            {
+                SslLabsClient ssl = new SslLabsClient();
+                var res = ssl.GetAnalysisBlocking(url, 0, AnalyzeOptions.ReturnAll | AnalyzeOptions.ReturnAll);
+
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                };
+
+                string protocolsJson = JsonConvert.SerializeObject(res.Endpoints[0].Details.Protocols, settings);
+                return protocolsJson;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public static IEnumerable<T> GetValues<T>()
+        {
+            return Enum.GetValues(typeof(T)).Cast<T>();
+        }
+
+        private Dictionary<SecurityProtocolType, bool> ProcessProtocols(string address)
+        {
+            //diccionario de tls
+            var protocolResultList = new Dictionary<SecurityProtocolType, bool>();
+            var defaultProtocol = ServicePointManager.SecurityProtocol;
+
+            ServicePointManager.Expect100Continue = true;
+            foreach (var protocol in GetValues<SecurityProtocolType>())
+            {
+                try
+                {                    
+                    ServicePointManager.SecurityProtocol = protocol;
+                    var request = WebRequest.Create(address);
+                    var response = request.GetResponse();
+                    //el protocolo encontrado
+                    protocolResultList.Add(protocol, true);
+                }
+                catch
+                {
+                    //si falla agrega false al protocolo
+                    protocolResultList.Add(protocol, false);
+                }
+            }
+
+            ServicePointManager.SecurityProtocol = defaultProtocol;
+
+            return protocolResultList;
+        }
+
+        public JsonSerializerSettings Settings()
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+
+            return settings;
+        }
+
+
+        #endregion
+
+
+
+
     }
 }
