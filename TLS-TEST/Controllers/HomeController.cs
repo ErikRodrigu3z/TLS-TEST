@@ -9,6 +9,8 @@ using TLS_TEST.Models;
 using SslLabsLib;
 using SslLabsLib.Enums;
 using Newtonsoft.Json;
+using System.Net;
+using System.IO;
 
 namespace TLS_TEST.Controllers
 {
@@ -22,7 +24,34 @@ namespace TLS_TEST.Controllers
         }
 
         public IActionResult Index()
-        {
+        {            
+            // Create a request for the URL.
+            WebRequest request = WebRequest.Create(
+              "https://clienttest.ssllabs.com:8443/ssltest/viewMyClient.html");
+            // If required by the server, set the credentials.
+            request.Credentials = CredentialCache.DefaultCredentials;
+            request.Timeout = 10000;
+            // Get the response.
+            WebResponse response = request.GetResponse();
+            // Display the status.
+            Debug.WriteLine(((HttpWebResponse)response).StatusDescription);
+
+            // Get the stream containing content returned by the server.
+            // The using block ensures the stream is automatically closed.
+            using (Stream dataStream = response.GetResponseStream())
+            {
+                // Open the stream using a StreamReader for easy access.
+                StreamReader reader = new StreamReader(dataStream);
+                // Read the content.
+                string responseFromServer = reader.ReadToEnd();
+                // Display the content.
+                Debug.WriteLine(responseFromServer);
+            }
+
+            // Close the response.
+            response.Close();
+
+
             return View();
         }
 
