@@ -68,13 +68,7 @@ namespace TLS_TEST.Controllers
                 SslLabsClient ssl = new SslLabsClient();
                 var res = ssl.GetAnalysisBlocking(url, 0, AnalyzeOptions.ReturnAll | AnalyzeOptions.ReturnAll);
 
-                JsonSerializerSettings settings = new JsonSerializerSettings
-                {
-                    Formatting = Formatting.Indented,
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                };
-
-                string protocolsJson = JsonConvert.SerializeObject(res.Endpoints[0].Details.Protocols, settings);
+                string protocolsJson = JsonConvert.SerializeObject(res.Endpoints[0].Details.Protocols, Settings());
                 return protocolsJson;
             }
             catch (Exception)
